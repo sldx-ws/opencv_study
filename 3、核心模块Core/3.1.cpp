@@ -144,6 +144,149 @@ void MatCopy() // TODO
 	waitKey(0);
 }
 
+void mask_test()
+{
+	Mat image, mask;
+	Rect r1(10, 10, 60, 100);
+	Mat img2;
+	image = imread("./image.jpg");
+	mask = Mat::zeros(image.size(), CV_8UC1);
+	mask(r1).setTo(255);
+	image.copyTo(img2, mask);
+	imshow("原图像", image);
+	imshow("复制后的目标图像", img2);
+	imshow("mask", mask);
+	waitKey();
+}
+
+void isEmpty()
+{
+	Mat m;
+	if (m.empty() == true)
+		cout << "NULL" << endl;
+}
+
+void ergodic_for()  //  TODO
+{
+	// 1、指针数组方式
+	//Mat mymat = Mat::ones(cv::Size(3, 2), CV_8UC3);
+	//Mat mymat = (Mat_<double>(3, 2) << 1, 2, 3, 4, 5, 6);
+	
+	int a[2][3] = { 1, 2, 3, 4, 5, 6 };
+	Mat mymat(2, 3, CV_8U, a);
+
+	uchar* pdata = (uchar*)mymat.data;
+
+	for (int i = 0; i < mymat.rows; ++i)
+	{
+		for (int j = 0; j < mymat.cols * mymat.channels(); ++j)
+		{
+			cout << (int)pdata[j] << " ";
+		}
+
+		cout << endl;
+	}
+}
+
+void ergodic_ptr()  //  TODO
+{
+	// 2、.ptr方式
+	// mat.ptr<type>(row)[col]
+	
+	// 单通道
+	Mat image1 = Mat(400, 600, CV_8UC1);
+	uchar* data00 = image1.ptr<uchar>(0); // 指向第0行(第0个元素)
+	uchar* data10 = image1.ptr<uchar>(1); // 指向第1行(第0个元素)
+	
+	// 多通道
+	Mat image2 = Mat(400, 600, CV_8UC3);
+	Vec3b* data000 = image2.ptr<Vec3b>(0);
+	Vec3b* data100 = image2.ptr<Vec3b>(1);
+
+
+	Mat mymat = Mat::ones(Size(3, 2), CV_8UC3);
+	for (int i = 0; i < mymat.rows; ++i)
+	{
+		uchar* pdata = mymat.ptr<uchar>(i);
+		for (int j = 0; j < mymat.cols * mymat.channels(); ++j)
+		{
+			cout << (int)pdata[j] << " ";
+		}
+
+		cout << endl;
+	}
+}
+
+void ergodic_at(Mat& image, int div = 64)
+{
+	// 3、.at方式
+	// 实现colorReduce
+	for (int i = 0; i < image.rows; ++i)
+	{
+		for (int j = 0; j < image.cols; ++j)
+		{
+			image.at<Vec3b>(i, j)[0] = image.at<Vec3b>(i, j)[0] / div * div + div / 2;
+			image.at<Vec3b>(i, j)[1] = image.at<Vec3b>(i, j)[1] / div * div + div / 2;
+			image.at<Vec3b>(i, j)[2] = image.at<Vec3b>(i, j)[2] / div * div + div / 2;
+		}
+	}
+}
+
+void ergodic_Continuous()
+{
+	// 4、内存连续法
+	Mat mymat = Mat::ones(Size(3, 2), CV_8UC3);
+	int nr = mymat.rows;
+	int nc = mymat.cols;
+	if (mymat.isContinuous())
+	{
+		nr = 1; // 如果连续，则当成一行
+		nc *= mymat.rows; /// 当成一行后的总列数
+	}
+
+	for (int i = 0; i < nr; ++i)
+	{
+		uchar* pdata = mymat.ptr<uchar>(i);
+		for (int j = 0; j < nc; ++j)
+		{
+			cout << (int)pdata[j] << " ";
+		}
+
+		cout << endl;
+	}
+}
+
+void ergodic_Iterator(const Mat& image, Mat& outImage, int div = 64)
+{
+	// 3、迭代器遍历法
+	// 实现colorReduce
+	outImage.create(image.size(), image.type());
+
+	MatConstIterator_<Vec3b> it_in = image.begin<Vec3b>();
+	MatConstIterator_<Vec3b> itend_in = image.end<Vec3b>();
+	MatIterator_<Vec3b> it_out = outImage.begin<Vec3b>();
+	MatIterator_<Vec3b> itend_out = outImage.end<Vec3b>();
+	while (it_in != itend_in)
+	{
+		(*it_out)[0] = (*it_in)[0] / div * div + div / 2;
+		(*it_out)[1] = (*it_in)[1] / div * div + div / 2;
+		(*it_out)[2] = (*it_in)[2] / div * div + div / 2;
+		++it_in;
+		++it_out;
+	}
+}
+
+void test_rectangle()
+{
+	Rect rect(2, 3, 10, 20);
+	cout << rect << endl;
+	cout << rect.area() << endl;
+	cout << rect.size() << endl;
+	cout << rect.tl() << " " << rect.br() << endl;
+	//cout << rect.width() << " " << rect.height() << endl;
+	cout << rect.contains(cv::Point(1, 2)) << endl;
+}
+
 int main()
 {
 	//MatInit1();
@@ -152,7 +295,34 @@ int main()
 	//PointerOfData();
 	//CreateANewMatrixHeader();
 	//GetNumOfChannels();
-	MatCopy();
+	//MatCopy();
+	//isEmpty();
+	
+	//ergodic_for();
+	//ergodic_ptr();
+
+	//Mat A = imread("./image.jpg", 1);
+	//namedWindow("原图", WINDOW_FREERATIO);
+	//imshow("原图", A);
+	//ergodic_at(A);
+	//namedWindow("效果图", WINDOW_FREERATIO);
+	//imshow("效果图", A);
+	//waitKey(0);
+
+	//ergodic_Continuous();
+
+	//Mat A = imread("./image.jpg", 1);
+	//Mat B;
+	//namedWindow("原图", WINDOW_FREERATIO);
+	//imshow("原图", A);
+	//ergodic_Iterator(A, B);
+	//namedWindow("效果图", WINDOW_FREERATIO);
+	//imshow("效果图", B);
+	//imwrite("afterimage.jpg", B);
+	//waitKey(0);
+
+	//test_rectangle();
+	mask_test();
 
 	return 0;
 }
